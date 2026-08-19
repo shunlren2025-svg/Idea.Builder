@@ -76,6 +76,8 @@
           <span class="count" id="ideaCount">0 ideas</span>
         </div>
         <div class="view-tools">
+          <button class="fullscreen-button" id="fullWallButton" type="button"><span aria-hidden="true">⛶</span> Full screen</button>
+          <button class="fullscreen-button exit-fullscreen" id="exitFullWall" type="button"><span aria-hidden="true">×</span> Exit focus</button>
           <label class="search-box">
             <span aria-hidden="true">⌕</span>
             <input id="searchInput" type="search" placeholder="Find an idea" aria-label="Find an idea">
@@ -88,7 +90,7 @@
 
       <div class="group-tabs" id="groupTabs" aria-label="Idea groups"></div>
 
-      <p class="wall-hint" id="wallHint"><span aria-hidden="true">✥</span> Drag any note to move it. Overlapping is allowed.</p>
+      <p class="wall-hint" id="wallHint"><span aria-hidden="true">✥</span> Click empty space to add a note. Drag notes to move them.</p>
 
       <div class="empty-state" id="emptyState">
         <div class="empty-doodle" aria-hidden="true">
@@ -174,6 +176,30 @@
       <input id="backupFile" type="file" accept="application/json,.json" hidden>
     </div>
     <p class="privacy-note">Google or Facebook sign-in needs a secure server and OAuth setup. This portable backup keeps your notes private and works without an account.</p>
+  </dialog>
+
+  <dialog id="placeIdeaDialog" class="paper-dialog place-idea-dialog">
+    <button class="dialog-close" data-close="placeIdeaDialog" aria-label="Close">×</button>
+    <p class="eyebrow">NEW STICKY NOTE</p>
+    <h2>What are you thinking?</h2>
+    <form id="placeIdeaForm">
+      <label class="sr-only" for="placeIdeaInput">Write an idea</label>
+      <textarea id="placeIdeaInput" maxlength="500" rows="4" placeholder="Type a thought, a question, a wild idea…" required></textarea>
+      <div class="place-meta">
+        <select id="placeGroupSelect" aria-label="Choose a group for this note"></select>
+        <label class="tag-field">
+          <span aria-hidden="true">#</span>
+          <input id="placeTagInput" maxlength="30" placeholder="tag (optional)" aria-label="Optional tag for this note">
+        </label>
+      </div>
+      <div class="place-footer">
+        <div>
+          <button class="voice-button" id="placeVoiceButton" type="button" aria-label="Speak this idea"><span aria-hidden="true">●</span><span class="voice-label">Speak</span></button>
+          <output id="placeCharCount" for="placeIdeaInput">0 / 500</output>
+        </div>
+        <button class="add-button" type="submit">Place note</button>
+      </div>
+    </form>
   </dialog>
 
   <div class="tour-overlay" id="tourOverlay" hidden>

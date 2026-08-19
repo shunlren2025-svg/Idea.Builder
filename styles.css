@@ -93,6 +93,9 @@ kbd { border: 1px solid #aaa; background: #eeeae0; padding: 1px 4px; border-radi
 .ideas-heading { display: flex; justify-content: space-between; gap: 20px; align-items: center; border-bottom: 2px solid var(--ink); padding-bottom: 15px; }
 .count { font-family: "Gaegu"; color: #65635d; font-size: 1.1rem; }
 .view-tools { display: flex; gap: 8px; }
+.fullscreen-button { height: 40px; padding: 0 12px; border: 1.5px solid var(--ink); background: var(--lime); font-size: .76rem; font-weight: 800; white-space: nowrap; }
+.fullscreen-button:hover { box-shadow: 2px 2px 0 var(--ink); transform: translate(-1px,-1px); }
+.exit-fullscreen { display: none; background: var(--coral); }
 .search-box { height: 40px; display: flex; align-items: center; gap: 5px; border-bottom: 1.5px solid var(--ink); padding: 0 6px; }
 .search-box input { width: 140px; border: 0; outline: 0; background: transparent; }
 .view-tools select { height: 40px; background: transparent; }
@@ -115,6 +118,7 @@ kbd { border: 1px solid #aaa; background: #eeeae0; padding: 1px 4px; border-radi
 .empty-state button { border: 0; border-bottom: 2px solid var(--ink); background: transparent; font-weight: 800; }
 
 .idea-grid { position: relative; min-height: 620px; border: 1px dashed rgba(36,36,32,.24); background: rgba(255,253,248,.25); overflow: hidden; }
+.idea-grid:not([hidden]) { cursor: crosshair; }
 .idea-card { --card-color: var(--yellow); --tilt: 0deg; width: min(270px, calc(100% - 24px)); min-height: 210px; position: absolute; left: 0; top: 0; background: var(--card-color); border: 1.5px solid var(--ink); padding: 23px 20px 17px; box-shadow: 3px 4px 0 rgba(36,36,32,.85); transform: rotate(var(--tilt)); transition: transform .16s, box-shadow .16s; touch-action: none; cursor: grab; user-select: none; }
 .idea-card:hover { transform: translateY(-2px) rotate(0); }
 .idea-card.dragging { z-index: 8; cursor: grabbing; transform: rotate(0) scale(1.025); box-shadow: 8px 10px 0 rgba(36,36,32,.72); transition: none; }
@@ -168,6 +172,18 @@ kbd { border: 1px solid #aaa; background: #eeeae0; padding: 1px 4px; border-radi
 .toast.show { transform: translate(-50%, 0); opacity: 1; }
 .backup-dialog > p:not(.eyebrow) { line-height: 1.55; }
 .backup-actions { display: flex; gap: 10px; margin: 22px 0; }
+.place-idea-dialog form { display: grid; gap: 14px; }
+.place-idea-dialog textarea { min-height: 140px; }
+.place-meta, .place-footer, .place-footer > div { display: flex; align-items: center; gap: 9px; }
+.place-meta select, .place-meta .tag-field { flex: 1; }
+.place-footer { justify-content: space-between; }
+.place-footer output { font-size: .72rem; font-weight: 700; color: #77746d; font-variant-numeric: tabular-nums; }
+.ideas-section.wall-fullscreen { position: fixed; inset: 0; z-index: 45; overflow: auto; padding: 24px clamp(16px,4vw,52px) 60px; background: repeating-linear-gradient(0deg, transparent 0 31px, rgba(47,93,125,.055) 31px 32px), var(--paper); }
+.ideas-section.wall-fullscreen .ideas-heading { position: sticky; top: -24px; z-index: 12; padding-top: 20px; background: var(--paper); }
+.ideas-section.wall-fullscreen .idea-grid { min-height: calc(100vh - 190px); }
+.ideas-section.wall-fullscreen #fullWallButton { display: none; }
+.ideas-section.wall-fullscreen #exitFullWall { display: block; }
+body.wall-is-fullscreen { overflow: hidden; }
 .tour-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(25,25,22,.52); pointer-events: auto; }
 .tour-overlay[hidden] { display: none; }
 .tour-card { position: fixed; z-index: 63; width: min(360px, calc(100vw - 28px)); padding: 24px; border: 2px solid var(--ink); background: var(--white); box-shadow: 6px 6px 0 var(--lime); pointer-events: auto; }
@@ -186,6 +202,7 @@ kbd { border: 1px solid #aaa; background: #eeeae0; padding: 1px 4px; border-radi
   .capture-tools .main-actions { justify-content: flex-end; }
   .idea-grid { min-height: 720px; }
   .view-tools { justify-content: space-between; }
+  .fullscreen-button { padding: 0 9px; }
   .view-tools .search-box { flex: 1; }
   .view-tools .search-box input { width: 100%; }
 }
@@ -209,6 +226,8 @@ kbd { border: 1px solid #aaa; background: #eeeae0; padding: 1px 4px; border-radi
   .doodle-fab span { font-size: 1.2rem; }
   .paper-dialog { padding: 28px 20px; }
   .backup-actions { flex-direction: column; }
+  .place-meta, .place-footer { align-items: stretch; flex-direction: column; }
+  .place-footer > div { justify-content: space-between; }
   .tool-divider { display: none; }
   .brush-size { width: 100%; margin-left: 0; }
   .brush-size input { flex: 1; }

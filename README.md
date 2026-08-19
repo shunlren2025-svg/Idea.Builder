@@ -10,6 +10,8 @@ Open `index.html` in a modern browser. Ideas and doodles are saved automatically
 - Optional speech-to-text
 - Groups, colors, and tags
 - Freeform draggable sticky-note wall with saved positions
+- Full-screen wall focus mode
+- Click-to-place notes with text, voice, group, and tag controls
 - Search and group filters
 - Edit, move, and delete actions
 - Doodle pad that saves drawings as ideas

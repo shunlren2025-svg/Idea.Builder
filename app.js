@@ -11,6 +11,7 @@ const defaultState = {
 let state = loadState();
 let selectedColor = COLORS[0];
 let toastTimer;
+let pendingWallPosition = null;
 
 const $ = (selector) => document.querySelector(selector);
 const els = {
@@ -21,7 +22,9 @@ const els = {
   ideaTemplate: $("#ideaTemplate"), toast: $("#toast"), saveState: $("#saveState"),
   helpDialog: $("#helpDialog"), groupDialog: $("#groupDialog"), doodleDialog: $("#doodleDialog"),
   backupDialog: $("#backupDialog"), newGroupName: $("#newGroupName"), colorPicks: $("#colorPicks"), doodleCanvas: $("#doodleCanvas"),
-  charCount: $("#charCount"), tourOverlay: $("#tourOverlay"), tourCard: $("#tourCard")
+  charCount: $("#charCount"), tourOverlay: $("#tourOverlay"), tourCard: $("#tourCard"),
+  ideasSection: $(".ideas-section"), placeIdeaDialog: $("#placeIdeaDialog"), placeIdeaInput: $("#placeIdeaInput"),
+  placeGroupSelect: $("#placeGroupSelect"), placeTagInput: $("#placeTagInput"), placeCharCount: $("#placeCharCount")
 };
 
 const tourSteps = [
@@ -48,7 +51,7 @@ function safeId() { return `${Date.now()}-${Math.random().toString(16).slice(2)}
 function groupById(id) { return state.groups.find(group => group.id === id) || state.groups[0]; }
 function escapeText(text) { const node = document.createElement("span"); node.textContent = text; return node.innerHTML; }
 
-function addIdea({ text, doodle = "" } = {}) {
+function addIdea({ text, doodle = "", position = null, groupId = null, tag = null } = {}) {
   const cleanText = (text ?? els.ideaInput.value).trim();
   if (!cleanText && !doodle) {
     els.ideaInput.focus();
@@ -56,8 +59,8 @@ function addIdea({ text, doodle = "" } = {}) {
     return;
   }
   state.ideas.unshift({
-    id: safeId(), text: cleanText, doodle, groupId: els.groupSelect.value || "inbox",
-    tag: els.tagInput.value.trim().replace(/^#/, ""), createdAt: new Date().toISOString()
+    id: safeId(), text: cleanText, doodle, position, groupId: groupId || els.groupSelect.value || "inbox",
+    tag: (tag ?? els.tagInput.value).trim().replace(/^#/, ""), createdAt: new Date().toISOString()
   });
   els.ideaInput.value = "";
   els.tagInput.value = "";
@@ -129,6 +132,7 @@ function renderGroupControls() {
   const currentFilter = els.filterSelect.value || "all";
   els.groupSelect.innerHTML = state.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
   els.filterSelect.innerHTML = '<option value="all">All groups</option>' + state.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
+  els.placeGroupSelect.innerHTML = state.groups.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
   if (state.groups.some(g => g.id === currentCapture)) els.groupSelect.value = currentCapture;
   if (currentFilter === "all" || state.groups.some(g => g.id === currentFilter)) els.filterSelect.value = currentFilter;
 
@@ -259,32 +263,70 @@ function setupVoice() {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Recognition) {
     els.voiceButton.addEventListener("click", () => showToast("Voice input isn’t supported in this browser."));
+    $("#placeVoiceButton").addEventListener("click", () => showToast("Voice input isn’t supported in this browser."));
     return;
   }
-  const recognition = new Recognition();
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  recognition.lang = navigator.language || "en-US";
-  let startingText = "";
-  recognition.onstart = () => { startingText = els.ideaInput.value; els.voiceButton.classList.add("listening"); els.voiceButton.querySelector(".voice-label").textContent = "Listening…"; };
-  recognition.onresult = event => {
-    const words = Array.from(event.results).map(result => result[0].transcript).join("");
-    els.ideaInput.value = `${startingText}${startingText ? " " : ""}${words}`;
-  };
-  recognition.onend = () => { els.voiceButton.classList.remove("listening"); els.voiceButton.querySelector(".voice-label").textContent = "Speak"; els.ideaInput.focus(); };
-  recognition.onerror = () => showToast("I couldn’t hear that. Try again or type it.");
-  els.voiceButton.addEventListener("click", async () => {
-    try {
-      if (navigator.permissions?.query) {
-        const permission = await navigator.permissions.query({ name: "microphone" });
-        if (permission.state === "denied") {
-          showToast("Microphone is blocked. Allow it in your browser’s site settings.");
-          return;
+  const connectVoice = (button, input, onUpdate = () => {}) => {
+    const recognition = new Recognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = navigator.language || "en-US";
+    let startingText = "";
+    recognition.onstart = () => { startingText = input.value; button.classList.add("listening"); button.querySelector(".voice-label").textContent = "Listening…"; };
+    recognition.onresult = event => {
+      const words = Array.from(event.results).map(result => result[0].transcript).join("");
+      input.value = `${startingText}${startingText ? " " : ""}${words}`.slice(0, 500);
+      onUpdate();
+    };
+    recognition.onend = () => { button.classList.remove("listening"); button.querySelector(".voice-label").textContent = "Speak"; input.focus(); };
+    recognition.onerror = () => showToast("I couldn’t hear that. Try again or type it.");
+    button.addEventListener("click", async () => {
+      try {
+        if (navigator.permissions?.query) {
+          const permission = await navigator.permissions.query({ name: "microphone" });
+          if (permission.state === "denied") { showToast("Microphone is blocked. Allow it in your browser’s site settings."); return; }
         }
-      }
-    } catch (_) {}
-    try { recognition.start(); } catch (_) {}
-  });
+      } catch (_) {}
+      try { recognition.start(); } catch (_) {}
+    });
+  };
+  connectVoice(els.voiceButton, els.ideaInput, updateCharCount);
+  connectVoice($("#placeVoiceButton"), els.placeIdeaInput, updatePlaceCharCount);
+}
+
+function updatePlaceCharCount() {
+  const count = els.placeIdeaInput.value.length;
+  els.placeCharCount.value = `${count} / 500`;
+  els.placeCharCount.textContent = `${count} / 500`;
+}
+
+function openPlaceIdea(event) {
+  if (event.target !== els.ideaGrid) return;
+  const rect = els.ideaGrid.getBoundingClientRect();
+  const noteWidth = Math.min(270, Math.max(240, els.ideaGrid.clientWidth - 24));
+  pendingWallPosition = {
+    x: Math.round(Math.max(12, Math.min(els.ideaGrid.clientWidth - noteWidth - 12, event.clientX - rect.left - noteWidth / 2))),
+    y: Math.round(Math.max(18, event.clientY - rect.top - 40))
+  };
+  els.placeGroupSelect.value = els.groupSelect.value || "inbox";
+  els.placeIdeaInput.value = "";
+  els.placeTagInput.value = "";
+  updatePlaceCharCount();
+  els.placeIdeaDialog.showModal();
+  setTimeout(() => els.placeIdeaInput.focus(), 0);
+}
+
+function toggleWallFullscreen(enabled) {
+  els.ideasSection.classList.toggle("wall-fullscreen", enabled);
+  document.body.classList.toggle("wall-is-fullscreen", enabled);
+  if (enabled && state.ideas.length === 0) {
+    els.emptyState.hidden = true;
+    els.ideaGrid.hidden = false;
+    $("#wallHint").hidden = false;
+  } else if (!enabled) {
+    render();
+  }
+  setTimeout(layoutWall, 0);
 }
 
 function setupGroups() {
@@ -440,15 +482,26 @@ function setupBackup() {
 
 els.addButton.addEventListener("click", () => addIdea());
 els.ideaInput.addEventListener("input", updateCharCount);
+els.placeIdeaInput.addEventListener("input", updatePlaceCharCount);
+els.ideaGrid.addEventListener("click", openPlaceIdea);
+$("#placeIdeaForm").addEventListener("submit", event => {
+  event.preventDefault();
+  addIdea({ text: els.placeIdeaInput.value, position: pendingWallPosition, groupId: els.placeGroupSelect.value, tag: els.placeTagInput.value });
+  els.placeIdeaDialog.close();
+  pendingWallPosition = null;
+});
 els.ideaInput.addEventListener("keydown", event => { if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) addIdea(); });
 els.searchInput.addEventListener("input", render);
 els.filterSelect.addEventListener("change", () => { state.activeGroup = "all"; render(); });
 $("#emptyAddButton").addEventListener("click", () => { els.ideaInput.focus(); window.scrollTo({ top: 200, behavior: "smooth" }); });
 $("#helpButton").addEventListener("click", startTour);
 $("#backupButton").addEventListener("click", () => els.backupDialog.showModal());
+$("#fullWallButton").addEventListener("click", () => toggleWallFullscreen(true));
+$("#exitFullWall").addEventListener("click", () => toggleWallFullscreen(false));
 $("#doodleButton").addEventListener("click", () => els.doodleDialog.showModal());
 window.addEventListener("resize", () => { if (!els.tourOverlay.hidden) positionTour(); });
 window.addEventListener("resize", () => { if (!els.ideaGrid.hidden) layoutWall(); });
+document.addEventListener("keydown", event => { if (event.key === "Escape" && els.ideasSection.classList.contains("wall-fullscreen") && !document.querySelector("dialog[open]")) toggleWallFullscreen(false); });
 document.querySelectorAll("[data-close]").forEach(button => button.addEventListener("click", () => document.getElementById(button.dataset.close).close()));
 document.addEventListener("click", () => closeMenus());
 
