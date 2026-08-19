@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f3e7">
+  <meta name="description" content="A quick, colorful place to catch and group ideas.">
+  <title>Idea Patch</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Idea Patch home">
+      <span class="brand-mark" aria-hidden="true">✦</span>
+      <span>idea patch</span>
+    </a>
+    <div class="save-state" id="saveState" aria-live="polite">
+      <span class="save-dot"></span> Saved on this device
+    </div>
+    <button class="backup-nav" id="backupButton" type="button">↥ Backup</button>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="pageTitle">
+      <p class="eyebrow">YOUR POCKET BRAINSTORM</p>
+      <h1 id="pageTitle">Catch it before<br><span>it floats away.</span></h1>
+      <p class="hero-copy">Messy thoughts welcome. Add an idea now, sort it out whenever.</p>
+      <div class="scribble-arrow" aria-hidden="true">↝</div>
+    </section>
+
+    <section class="capture-wrap" aria-labelledby="captureTitle">
+      <div class="capture-card">
+        <div class="capture-head">
+          <div>
+            <span class="step-dot">1</span>
+            <h2 id="captureTitle">What are you thinking?</h2>
+          </div>
+          <button class="icon-button help-button" id="helpButton" type="button" aria-label="How this works">?</button>
+        </div>
+
+        <label class="sr-only" for="ideaInput">Write an idea</label>
+        <textarea id="ideaInput" maxlength="500" rows="4" placeholder="Type a thought, a question, a wild idea…"></textarea>
+
+        <div class="capture-tools">
+          <div class="quick-fields">
+            <label class="select-label">
+              <span class="sr-only">Group</span>
+              <select id="groupSelect" aria-label="Choose a group">
+                <option value="inbox">📥 Inbox</option>
+              </select>
+            </label>
+            <label class="tag-field">
+              <span aria-hidden="true">#</span>
+              <input id="tagInput" maxlength="30" placeholder="tag (optional)" aria-label="Optional tag">
+            </label>
+          </div>
+          <div class="main-actions">
+            <button class="voice-button" id="voiceButton" type="button" aria-label="Speak an idea">
+              <span aria-hidden="true">●</span><span class="voice-label">Speak</span>
+            </button>
+            <button class="add-button" id="addButton" type="button">Add idea <span aria-hidden="true">↵</span></button>
+          </div>
+        </div>
+        <div class="under-input">
+          <p class="input-hint" id="inputHint">Tip: press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to add fast.</p>
+          <output class="char-count" id="charCount" for="ideaInput">0 / 500</output>
+        </div>
+      </div>
+    </section>
+
+    <section class="ideas-section" aria-labelledby="ideasTitle">
+      <div class="ideas-heading">
+        <div>
+          <span class="step-dot coral">2</span>
+          <h2 id="ideasTitle">Your idea pile</h2>
+          <span class="count" id="ideaCount">0 ideas</span>
+        </div>
+        <div class="view-tools">
+          <label class="search-box">
+            <span aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" placeholder="Find an idea" aria-label="Find an idea">
+          </label>
+          <select id="filterSelect" aria-label="Filter ideas by group">
+            <option value="all">All groups</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="group-tabs" id="groupTabs" aria-label="Idea groups"></div>
+
+      <p class="wall-hint" id="wallHint"><span aria-hidden="true">✥</span> Drag any note to move it. Overlapping is allowed.</p>
+
+      <div class="empty-state" id="emptyState">
+        <div class="empty-doodle" aria-hidden="true">
+          <span>✎</span>
+          <i></i><i></i><i></i>
+        </div>
+        <h3>Your first idea goes here.</h3>
+        <p>It doesn’t have to be polished. That’s the whole point.</p>
+        <button type="button" id="emptyAddButton">Write one now ↑</button>
+      </div>
+
+      <div class="idea-grid" id="ideaGrid" aria-live="polite"></div>
+      <p class="no-results" id="noResults" hidden>No ideas match that search.</p>
+    </section>
+  </main>
+
+  <button class="doodle-fab" id="doodleButton" type="button" aria-label="Open doodle pad">
+    <span aria-hidden="true">✎</span> Doodle
+  </button>
+
+  <dialog id="helpDialog" class="paper-dialog">
+    <button class="dialog-close" data-close="helpDialog" aria-label="Close">×</button>
+    <p class="eyebrow">THREE TINY STEPS</p>
+    <h2>Brainstorming, minus the fuss.</h2>
+    <ol>
+      <li><b>Catch it.</b> Type or speak whatever is in your head.</li>
+      <li><b>Group it.</b> Pick a group now or move it later.</li>
+      <li><b>Find it.</b> Search or tap a group when you come back.</li>
+    </ol>
+    <p class="privacy-note">Everything saves automatically in this browser. Nothing is uploaded.</p>
+  </dialog>
+
+  <dialog id="groupDialog" class="paper-dialog small-dialog">
+    <button class="dialog-close" data-close="groupDialog" aria-label="Close">×</button>
+    <p class="eyebrow">NEW GROUP</p>
+    <h2>Give this pile a name.</h2>
+    <form id="groupForm">
+      <label for="newGroupName">Group name</label>
+      <input id="newGroupName" maxlength="24" required placeholder="Talent show, someday, questions…">
+      <fieldset>
+        <legend>Pick a color</legend>
+        <div class="color-picks" id="colorPicks"></div>
+      </fieldset>
+      <button class="add-button full-button" type="submit">Create group</button>
+    </form>
+  </dialog>
+
+  <dialog id="doodleDialog" class="paper-dialog doodle-dialog">
+    <button class="dialog-close" data-close="doodleDialog" aria-label="Close">×</button>
+    <p class="eyebrow">QUICK DOODLE</p>
+    <h2>Think with your hands.</h2>
+    <div class="doodle-toolbar" aria-label="Doodle colors">
+      <span>Ink color</span>
+      <button class="doodle-color selected" type="button" data-doodle-color="#242420" style="--swatch:#242420" aria-label="Black" aria-pressed="true"></button>
+      <button class="doodle-color" type="button" data-doodle-color="#ef5f50" style="--swatch:#ef5f50" aria-label="Coral" aria-pressed="false"></button>
+      <button class="doodle-color" type="button" data-doodle-color="#247fba" style="--swatch:#247fba" aria-label="Blue" aria-pressed="false"></button>
+      <button class="doodle-color" type="button" data-doodle-color="#6b4bb5" style="--swatch:#6b4bb5" aria-label="Purple" aria-pressed="false"></button>
+      <button class="doodle-color" type="button" data-doodle-color="#328354" style="--swatch:#328354" aria-label="Green" aria-pressed="false"></button>
+      <button class="doodle-color" type="button" data-doodle-color="#e49f16" style="--swatch:#e49f16" aria-label="Gold" aria-pressed="false"></button>
+      <span class="tool-divider" aria-hidden="true"></span>
+      <button class="eraser-button" id="doodleEraser" type="button" aria-pressed="false"><span aria-hidden="true">▱</span> Eraser</button>
+      <label class="brush-size" for="doodleSize">
+        <span>Size</span>
+        <input id="doodleSize" type="range" min="2" max="24" value="4" step="1">
+        <output id="doodleSizeValue" for="doodleSize">4</output>
+      </label>
+    </div>
+    <canvas id="doodleCanvas" width="700" height="380" aria-label="Doodle drawing area"></canvas>
+    <div class="doodle-actions">
+      <button class="plain-button" id="clearDoodle" type="button">Clear</button>
+      <button class="add-button" id="saveDoodle" type="button">Save as an idea</button>
+    </div>
+  </dialog>
+
+  <dialog id="backupDialog" class="paper-dialog backup-dialog">
+    <button class="dialog-close" data-close="backupDialog" aria-label="Close">×</button>
+    <p class="eyebrow">KEEP A COPY</p>
+    <h2>Back up your idea pile.</h2>
+    <p>Your notes already save on this device. Download a backup to keep elsewhere, or restore one you saved before.</p>
+    <div class="backup-actions">
+      <button class="add-button" id="exportBackup" type="button">Download backup</button>
+      <button class="plain-button" id="importBackup" type="button">Restore backup</button>
+      <input id="backupFile" type="file" accept="application/json,.json" hidden>
+    </div>
+    <p class="privacy-note">Google or Facebook sign-in needs a secure server and OAuth setup. This portable backup keeps your notes private and works without an account.</p>
+  </dialog>
+
+  <div class="tour-overlay" id="tourOverlay" hidden>
+    <section class="tour-card" id="tourCard" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+      <p class="eyebrow" id="tourStepLabel">QUICK TOUR · 1 OF 3</p>
+      <h2 id="tourTitle">Catch a thought</h2>
+      <p id="tourCopy">Type anything here—or tap Speak to say it out loud.</p>
+      <div class="tour-actions">
+        <button class="tour-skip" id="tourSkip" type="button" onclick="finishTour()">Skip</button>
+        <button class="add-button" id="tourNext" type="button" onclick="nextTourStep()">Next →</button>
+      </div>
+    </section>
+  </div>
+
+  <template id="ideaTemplate">
+    <article class="idea-card">
+      <div class="card-tape" aria-hidden="true"></div>
+      <div class="card-top">
+        <span class="card-group"></span>
+        <button class="card-menu" type="button" aria-label="Idea actions">•••</button>
+      </div>
+      <p class="card-text"></p>
+      <img class="card-doodle" alt="Saved doodle" hidden>
+      <div class="card-bottom">
+        <span class="card-tag"></span>
+        <time class="card-time"></time>
+      </div>
+      <div class="card-actions" hidden>
+        <button type="button" data-action="move">Move</button>
+        <button type="button" data-action="edit">Edit</button>
+        <button type="button" data-action="delete" class="danger">Delete</button>
+      </div>
+    </article>
+  </template>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
